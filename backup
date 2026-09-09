@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>CarShip — Автомобили</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f5f7;
+            color: #1c1c1e;
+            padding-bottom: 70px;
+        }
+
+        .header {
+            background: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .logo {
+            font-family: 'Bebas Neue Cyrillic', sans-serif;
+            font-size: 64px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: -5px;
+            color: #2c3e50;
+            transform: scaleX(0.8) scaleY(1.2);
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .road-container {
+            flex: 1;
+            height: 40px;
+            position: relative;
+            margin-left: 16px;
+            opacity: 0.18;
+            min-width: 60px;
+        }
+
+        .road {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: repeating-linear-gradient(
+                to right,
+                #2c3e50 0px,
+                #2c3e50 8px,
+                transparent 8px,
+                transparent 16px
+            );
+            animation: roadMove 1.5s linear infinite;
+        }
+
+        .road-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2c3e50;
+            transform: translateY(-8px);
+        }
+
+        .road-line-bottom {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2c3e50;
+            transform: translateY(8px);
+        }
+
+        @keyframes roadMove {
+            0% { background-position: 0 0; }
+            100% { background-position: -16px 0; }
+        }
+
+        .car-icon {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 20px;
+            animation: carDrive 5s ease-in-out infinite;
+            filter: brightness(1);
+            opacity: 1;
+        }
+
+        @keyframes carDrive {
+            0% { 
+                right: -30px; 
+                transform: translateY(-50%) scaleX(1); 
+            }
+            45% { 
+                right: calc(100% - 10px); 
+                transform: translateY(-50%) scaleX(1); 
+            }
+            50% { 
+                right: calc(100% - 10px); 
+                transform: translateY(-50%) scaleX(-1); 
+            }
+            55% { 
+                right: calc(100% - 10px); 
+                transform: translateY(-50%) scaleX(-1); 
+            }
+            95% { 
+                right: -30px; 
+                transform: translateY(-50%) scaleX(-1); 
+            }
+            100% { 
+                right: -30px; 
+                transform: translateY(-50%) scaleX(1); 
+            }
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            padding: 0 16px;
+            gap: 8px;
+            overflow-x: auto;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            padding: 12px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6c757d;
+            background: none;
+            border: none;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: #0066cc;
+            border-bottom: 2px solid #0066cc;
+        }
+
+        .cars-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            padding: 16px;
+        }
+
+        .car-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+
+        .car-card:active {
+            transform: scale(0.97);
+        }
+
+        .car-image {
+            width: 100%;
+            aspect-ratio: 4/3;
+            object-fit: cover;
+            background: #f0f0f0;
+        }
+
+        .car-info {
+            padding: 12px;
+        }
+
+        .car-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .car-year {
+            font-size: 13px;
+            color: #6c757d;
+            margin: 4px 0;
+        }
+
+        .car-price {
+            font-weight: 700;
+            font-size: 18px;
+            color: #0066cc;
+        }
+
+        /* Модальное окно (детали авто) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: block;
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: white;
+            padding: 16px;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            z-index: 10;
+        }
+
+        .back-btn {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .modal-image {
+            width: 100%;
+            aspect-ratio: 16/9;
+            object-fit: contain;
+            background: #000;
+        }
+
+        .car-details {
+            padding: 20px;
+        }
+
+        .car-specs {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 16px;
+            margin: 16px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            white-space: pre-line;
+        }
+
+        .contact-btn {
+            width: 100%;
+            padding: 14px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        .stock-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .in-stock {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .out-of-stock {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        /* Стили для слайдера */
+        .slider-container {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #000;
+            overflow: hidden;
+        }
+
+        .slider-wrapper {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        .slider-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .slider-image.active {
+            opacity: 1;
+        }
+
+        .slider-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: background 0.2s;
+        }
+
+        .slider-btn:hover {
+            background: rgba(0,0,0,0.8);
+        }
+
+        .slider-btn.prev {
+            left: 10px;
+        }
+
+        .slider-btn.next {
+            right: 10px;
+        }
+
+        .slider-dots {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 10;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .dot.active {
+            background: white;
+        }
+
+        @media (max-width: 480px) {
+            .cars-grid {
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .logo {
+                font-size: 48px;
+            }
+            
+            .car-icon {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">CARSHIP</div>
+        <div class="road-container">
+            <div class="road-line"></div>
+            <div class="road"></div>
+            <div class="road-line-bottom"></div>
+            <span class="car-icon">🚗</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" data-category="china_new">🇨🇳 Китай до 160 л.с. (новые)</button>
+        <button class="tab" data-category="china_used">🇨🇳 Китай до 160 л.с. (б/у)</button>
+        <button class="tab" data-category="europe">🇪🇺 Под заказ из Европы</button>
+		<button class="tab" data-category="kg_new">kg Под заказ из Киргизии</button>
+		<button class="tab" data-category="ev_order">ev Электромобили</button>
+        <button class="tab" data-category="moscow_new">📍 В наличии Москва (Китай/Европа)</button>
+        <button class="tab" data-category="moscow_used">🔄 В наличии Москва (б/у)</button>
+    </div>
+
+    <div id="carsContainer" class="cars-grid">
+        <div class="loading">Загрузка...</div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-header">
+            <button class="back-btn" onclick="closeModal()">←</button>
+            <span id="modalTitle">CarShip</span>
+            <div style="width:32px;"></div>
+        </div>
+        <div id="modalContent"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // 📦 ВСЕ ДАННЫЕ ОБ АВТОМОБИЛЯХ ХРАНЯТСЯ ЗДЕСЬ (в коде)
+        // ============================================================
+        const CARS_DATA = {
+            china_new: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/mazdacx5new/1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/mazdacx5new/2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/mazdacx5new/3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/mazdacx5new/9.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/mazdacx5new/10.jpg'
+						],
+                    brand: 'Mazda',
+                    model: 'CX-5',
+                    year: 2026,
+                    price: 3450000,
+                    specs: '2.0 бензин (155 л.с)\nАКПП\nПередний привод\nПробег: 0 км\nМаксимальная комплектация',
+                    in_stock: false,
+                    location: 'Хоргос, Китай'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocnew/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'T-Roc',
+                    year: 2026,
+                    price: 2750000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nПробег: 0 км',
+                    in_stock: false,
+                    location: 'Хоргос, Китай'
+                },
+		{
+                    id: 2,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs3new/photo_6.jpg'
+                    ],
+                    brand: 'GAC',
+                    model: 'GS3',
+                    year: 2026,
+                    price: 1990000,
+                    specs: '1.5 турбо бензин (150 л.с)\nРобот\nПередний привод\nПробег: 0 км',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 3,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/gacgs4new/photo_6.jpg'
+                    ],
+                    brand: 'GAC',
+                    model: 'GS4',
+                    year: 2026,
+                    price: 2450000,
+                    specs: '1.5 турбо бензин (150 л.с)\nРобот\nПередний привод\nПробег: 0 км',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 4,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantranew/photo_6.jpg'
+                    ],
+                    brand: 'Hyundai',
+                    model: 'Elantra',
+                    year: 2026,
+                    price: 2270000,
+                    specs: '1.5 бензин (115 л.с)\nВариатор\nПередний привод\nПробег: 0 км',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 5,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelycoolraynew/photo_6.jpg'
+                    ],
+                    brand: 'Geely',
+                    model: 'Coolray',
+                    year: 2026,
+                    price: 1699000,
+                    specs: '1.5 бензин (126 л.с)\nВариатор\nПередний привод\nПробег: 0 км',
+                    in_stock: false,
+                    location: 'Китай'
+                }
+            ],
+
+            china_used: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-28-35.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-28-40.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-28-43.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-28-48.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-28-53.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwboraused/photo_2026-08-27_07-29-11.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Bora',
+                    year: 2023,
+                    price: 1750000,
+                    specs: '1.2 бензин (115 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 44,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-46-48.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-47-15.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-46-51.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-47-07.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-46-52.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlavidaused/photo_2026-05-07_12-47-50.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Lavida',
+                    year: 2022,
+                    price: 1950000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 27,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 2,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwgolfused/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Golf',
+                    year: 2023,
+                    price: 2400000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 31,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 3,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwlamandoused/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Lamando',
+                    year: 2023,
+                    price: 2350000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 28,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 4,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwpassatused/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Passat',
+                    year: 2022,
+                    price: 2300000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 49,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 5,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtrocused/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'T-Roc',
+                    year: 2022,
+                    price: 2300000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 37,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 6,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw1used/photo_6.jpg'
+                    ],
+                    brand: 'BMW',
+                    model: '1 series',
+                    year: 2022,
+                    price: 2200000,
+                    specs: '1.5 турбо бензин (140 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 54,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 7,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmw3g20used/photo_6.jpg'
+                    ],
+                    brand: 'BMW',
+                    model: '3 series G20',
+                    year: 2023,
+                    price: 3500000,
+                    specs: '2.0 турбо бензин (156 л.с)\nАКПП\nЗадний привод\nБез окрасов\nПробег: 39,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 8,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bmwx1used/photo_6.jpg'
+                    ],
+                    brand: 'BMW',
+                    model: 'X1',
+                    year: 2022,
+                    price: 2500000,
+                    specs: '1.5 турбо бензин (140 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 65,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 9,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia3used/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'A3',
+                    year: 2022,
+                    price: 2300000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 27,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 10,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3used/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q3',
+                    year: 2022,
+                    price: 2750000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 40,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 11,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq2used/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q2L',
+                    year: 2023,
+                    price: 2400000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 18,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 12,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondaxrvused/photo_6.jpg'
+                    ],
+                    brand: 'Honda',
+                    model: 'XR-V',
+                    year: 2023,
+                    price: 2000000,
+                    specs: '1.5 бензин (124 л.с)\nАКПП\nПередний привод\nБез окрасов\nПробег: 29,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 13,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondavezelused/photo_6.jpg'
+                    ],
+                    brand: 'Honda',
+                    model: 'Vezel',
+                    year: 2022,
+                    price: 1800000,
+                    specs: '1.5 бензин (124 л.с)\nАКПП\nПередний привод\nБез окрасов\nПробег: 36,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 14,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondacivic/photo_6.jpg'
+                    ],
+                    brand: 'Honda',
+                    model: 'Civic',
+                    year: 2022,
+                    price: 2100000,
+                    specs: '1.5 бензин (129 л.с)\nВариатор\nПередний привод\nБез окрасов\nПробег: 29,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 15,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hondafitused/photo_6.jpg'
+                    ],
+                    brand: 'Honda',
+                    model: 'Fit',
+                    year: 2022,
+                    price: 1600000,
+                    specs: '1.5 бензин (129 л.с)\nВариатор\nПередний привод\nБез окрасов\nПробег: 23,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 16,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodarapidused/photo_6.jpg'
+                    ],
+                    brand: 'Skoda',
+                    model: 'Rapid',
+                    year: 2022,
+                    price: 2000000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 22,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 17,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctaviaused/photo_6.jpg'
+                    ],
+                    brand: 'Skoda',
+                    model: 'Octavia',
+                    year: 2022,
+                    price: 2200000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 38,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 18,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodasuperbused/photo_6.jpg'
+                    ],
+                    brand: 'Skoda',
+                    model: 'Superb',
+                    year: 2023,
+                    price: 2450000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 37,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 19,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/jettavs7used/photo_6.jpg'
+                    ],
+                    brand: 'Jetta',
+                    model: 'VS7',
+                    year: 2022,
+                    price: 1950000,
+                    specs: '1.4 турбо бензин (150 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 32,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 20,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/kiak3used/photo_6.jpg'
+                    ],
+                    brand: 'Kia',
+                    model: 'K3',
+                    year: 2022,
+                    price: 1800000,
+                    specs: '1.5 бензин (115 л.с)\nАКПП\nПередний привод\nПрисутствуют вторичные окрасы\nПробег: 59,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				},
+				{
+                    id: 21,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/hyundaielantraused/photo_6.jpg'
+                    ],
+                    brand: 'Hyundai',
+                    model: 'Elantra',
+                    year: 2023,
+                    price: 2000000,
+                    specs: '1.4 турбо бензин (140 л.с)\nРобот\nПередний привод\nБез окрасов\nПробег: 35,000 км',
+                    in_stock: false,
+                    location: 'Китай'
+				}
+            ],
+
+            europe: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq8new/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q8',
+                    year: 2026,
+                    price: 15500000,
+                    specs: '3.0 турбо дизель (286 л.с)\nАКПП\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Европа'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/volkov98/car_ship/main/audi_a6_1263992.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'A6 Quattro',
+                    year: 2021,
+                    price: 4500000,
+                    specs: '3.0 бензин (340 л.с)\nАКПП 8 ст.\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Германия'
+                }
+            ],
+
+			kg_new: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtiguanlpronew/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Tiguan L Pro',
+                    year: 2026,
+                    price: 4800000,
+                    specs: '2.0 турбо бензин (220 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwteramontpronew/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Teramont Pro',
+                    year: 2026,
+                    price: 5990000,
+                    specs: '2.0 турбо бензин (272 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 2,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/vwtavendornew/photo_6.jpg'
+                    ],
+                    brand: 'Volkswagen',
+                    model: 'Tavendor',
+                    year: 2026,
+                    price: 5490000,
+                    specs: '2.0 турбо бензин (220 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 3,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq3new/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q3',
+                    year: 2026,
+                    price: 3850000,
+                    specs: '1.5 турбо бензин (160 л.с)\nРобот\nПередний привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 4,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq5lnew/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q5L',
+                    year: 2026,
+                    price: 6300000,
+                    specs: '2.0 турбо бензин (204 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 5,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audia5lnew/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'A5L',
+                    year: 2026,
+                    price: 5750000,
+                    specs: '2.0 турбо бензин (204 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 6,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/audiq6new/photo_6.jpg'
+                    ],
+                    brand: 'Audi',
+                    model: 'Q6',
+                    year: 2026,
+                    price: 7900000,
+                    specs: '2.0 турбо бензин (265 л.с)\nРобот\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 7,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotahighlandernew/photo_6.jpg'
+                    ],
+                    brand: 'Toyota',
+                    model: 'Highlander',
+                    year: 2026,
+                    price: 5250000,
+                    specs: '2.0 турбо бензин (248 л.с)\nАКПП\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                },
+				{
+                    id: 8,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotarav4new/photo_6.jpg'
+                    ],
+                    brand: 'Toyota',
+                    model: 'RAV4',
+                    year: 2026,
+                    price: 4150000,
+                    specs: '2.0 бензин (171 л.с)\nАКПП\nПолный привод\nПробег: 0 км (новый)',
+                    in_stock: false,
+                    location: 'Бишкек'
+                }
+            ],
+
+			ev_order: [
+				{
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/geelyex2used/photo_6.jpg'
+                    ],
+                    brand: 'Geely Galaxy',
+                    model: 'EX2',
+                    year: 2025,
+                    price: 1600000,
+                    specs: '0.0 электро (79 л.с)\nАКПП\nЗадний привод\nПробег: 9,000 км\n310км запас хода',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/bydseagull/photo_6.jpg'
+                    ],
+                    brand: 'BYD',
+                    model: 'Seagull',
+                    year: 2023,
+                    price: 1550000,
+                    specs: '0.0 электро (75 л.с)\nАКПП\nЗадний привод\nПробег: 13,000 км\n305км запас хода',
+                    in_stock: false,
+                    location: 'Китай'
+                },
+				{
+                    id: 2,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_1.jpg',
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/zeekrxused/photo_6.jpg'
+                    ],
+                    brand: 'Zeekr',
+                    model: 'X',
+                    year: 2025,
+                    price: 4200000,
+                    specs: '0.0 электро (272 л.с)\nАКПП\nЗадний привод\nПробег: 3,000 км\n420км запас хода',
+                    in_stock: false,
+                    location: 'Китай'
+                }
+			],
+
+            moscow_new: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/toyotayarisgrused/photo_6.jpg'
+                    ],
+                    brand: 'Toyota',
+                    model: 'Yaris GR',
+                    year: 2024,
+                    price: 6700000,
+                    specs: '1.6 турбо бензин (280 л.с)\nАКПП 8 ст.\nПолный привод\nПробег: 3,000 км',
+                    in_stock: true,
+                    location: 'Москва, ЮЗАО'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_1.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_2.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_3.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_4.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_5.jpg',
+						'https://raw.githubusercontent.com/andrey7kashulin/car_ship7/main/skodaoctavisrsimport/photo_6.jpg'
+                    ],
+                    brand: 'Skoda',
+                    model: 'Octavia RS',
+                    year: 2022,
+                    price: 4800000,
+                    specs: '1.4 турбо бензин + гибридная установка (245 л.с)\nАКПП\nПередний привод\nПробег: 50,000 км',
+                    in_stock: true,
+                    location: 'Москва, ЮЗАО'
+                }
+            ],
+
+            moscow_used: [
+                {
+                    id: 0,
+                    photos: [
+                        'https://via.placeholder.com/600x400/fd7e14/ffffff?text=Moscow+Used+Car'
+                    ],
+                    brand: 'Lexus',
+                    model: 'LX470',
+                    year: 2005,
+                    price: 1200000,
+                    specs: '4.7 бензин (235 л.с)\nАКПП\nПолный привод\nПробег: 220,000 км\nТребуется небольшой ремонт',
+                    in_stock: true,
+                    location: 'Москва, ЮАО'
+                },
+                {
+                    id: 1,
+                    photos: [
+                        'https://via.placeholder.com/600x400/20c997/ffffff?text=Moscow+Used+Car+2'
+                    ],
+                    brand: 'Honda',
+                    model: 'Accord',
+                    year: 2008,
+                    price: 650000,
+                    specs: '2.4 бензин (190 л.с)\nАКПП\nПередний привод\nПробег: 180,000 км',
+                    in_stock: true,
+                    location: 'Москва, ВАО'
+                }
+            ]
+        };
+
+        // ============================================================
+        // 🖥️ ЛОГИКА РАБОТЫ КАТАЛОГА
+        // ============================================================
+
+        let currentCategory = 'china_new';
+        let currentSlide = 0;
+
+        function renderCars() {
+            const container = document.getElementById('carsContainer');
+            const cars = CARS_DATA[currentCategory] || [];
+
+            if (cars.length === 0) {
+                container.innerHTML = '<div class="loading">Нет автомобилей в этой категории</div>';
+                return;
+            }
+
+            container.innerHTML = cars.map(car => `
+                <div class="car-card" onclick="openCarModal('${currentCategory}', ${car.id})">
+                    <img src="${car.photos[0] || 'https://placehold.co/400x300?text=No+Image'}" class="car-image">
+                    <div class="car-info">
+                        <div class="car-title">${car.brand} ${car.model}</div>
+                        <div class="car-year">${car.year}</div>
+                        <div class="car-price">${formatPrice(car.price)} ₽</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openCarModal(category, carId) {
+            const car = CARS_DATA[category].find(c => c.id === carId);
+            if (!car) return;
+
+            document.getElementById('modalTitle').textContent = `${car.brand} ${car.model}`;
+
+            let photosHTML = '';
+
+            if (car.photos.length > 1) {
+                photosHTML = `
+                    <div class="slider-container">
+                        <div class="slider-wrapper">
+                            ${car.photos.map((photo, index) => `
+                                <img src="${photo}" class="slider-image ${index === 0 ? 'active' : ''}" data-index="${index}">
+                            `).join('')}
+                        </div>
+                        <button class="slider-btn prev" onclick="changeSlide(-1)">‹</button>
+                        <button class="slider-btn next" onclick="changeSlide(1)">›</button>
+                        <div class="slider-dots">
+                            ${car.photos.map((_, index) => `
+                                <span class="dot ${index === 0 ? 'active' : ''}" onclick="goToSlide(${index})"></span>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                photosHTML = `<img src="${car.photos[0]}" class="modal-image">`;
+            }
+
+            document.getElementById('modalContent').innerHTML = `
+                ${photosHTML}
+                <div class="car-details">
+                    <div style="font-size:28px; font-weight:700; color:#0066cc;">${formatPrice(car.price)} ₽</div>
+                    <div class="stock-badge ${car.in_stock ? 'in-stock' : 'out-of-stock'}">
+                        ${car.in_stock ? '✓ В наличии' : '📦 Под заказ'}
+                    </div>
+                    <div class="car-specs">
+                        <strong>📋 Характеристики:</strong><br>
+                        ${car.specs.replace(/\n/g, '<br>')}
+                    </div>
+                    <div style="margin-top:8px;">
+                        <strong>📍 Местоположение:</strong> ${car.location}
+                    </div>
+                    <button class="contact-btn" onclick="alert('📞 Свяжитесь с нами: @CarShip_manager или +7 (XXX) XXX-XX-XX')">
+                        📞 Связаться с менеджером
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('modal').classList.add('active');
+            currentSlide = 0;
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function changeSlide(direction) {
+            const slides = document.querySelectorAll('.slider-image');
+            const dots = document.querySelectorAll('.dot');
+
+            if (slides.length === 0) return;
+
+            slides[currentSlide].classList.remove('active');
+            if (dots.length) dots[currentSlide].classList.remove('active');
+
+            currentSlide += direction;
+
+            if (currentSlide >= slides.length) currentSlide = 0;
+            if (currentSlide < 0) currentSlide = slides.length - 1;
+
+            slides[currentSlide].classList.add('active');
+            if (dots.length) dots[currentSlide].classList.add('active');
+        }
+
+        function goToSlide(index) {
+            const slides = document.querySelectorAll('.slider-image');
+            const dots = document.querySelectorAll('.dot');
+
+            if (slides.length === 0) return;
+
+            slides[currentSlide].classList.remove('active');
+            if (dots.length) dots[currentSlide].classList.remove('active');
+
+            currentSlide = index;
+
+            slides[currentSlide].classList.add('active');
+            if (dots.length) dots[currentSlide].classList.add('active');
+        }
+
+        function formatPrice(price) {
+            return new Intl.NumberFormat('ru-RU').format(price);
+        }
+
+        // Переключение категорий (табы)
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentCategory = tab.dataset.category;
+                renderCars();
+            });
+        });
+
+        // Подключаем Telegram WebApp (если запущено внутри Telegram)
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.expand();
+            tg.enableClosingConfirmation();
+        }
+
+        // Первоначальная загрузка
+        renderCars();
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</body>
+</html>
